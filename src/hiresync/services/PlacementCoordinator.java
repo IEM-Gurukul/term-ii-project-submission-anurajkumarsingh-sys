@@ -10,6 +10,11 @@ import hiresync.models.Student;
 import java.util.ArrayList;
 import java.util.List;
 
+import hiresync.exceptions.IneligibleStudentException;
+import hiresync.state.ApplicationState;
+import hiresync.state.InterviewState;
+import hiresync.state.OfferedState;
+
 /**
  * Singleton class managing the placement process.
  */
@@ -36,6 +41,30 @@ public class PlacementCoordinator {
 
     public void registerCompany(Company company) {
         companies.add(company);
+    }
+
+    public void applyStudentToJob(Student student, JobProfile profile) throws IneligibleStudentException {
+        List<Student> eligible = getEligibleStudents(profile);
+        if (!eligible.contains(student)) {
+            throw new IneligibleStudentException("Student " + student.getName() + " is not eligible for " + profile.getTitle());
+        }
+        student.applyForJob(profile.getProfileId());
+    }
+
+    public void scheduleInterview(Student student, JobProfile profile) {
+        ApplicationState currentState = student.getApplicationState(profile.getProfileId());
+        if (currentState != null) {
+            currentState.scheduleInterview();
+            student.updateApplicationState(profile.getProfileId(), new InterviewState());
+        }
+    }
+
+    public void makeOffer(Student student, JobProfile profile) {
+        ApplicationState currentState = student.getApplicationState(profile.getProfileId());
+        if (currentState != null) {
+            currentState.makeOffer();
+            student.updateApplicationState(profile.getProfileId(), new OfferedState());
+        }
     }
 
     public List<Student> getEligibleStudents(JobProfile profile) {
