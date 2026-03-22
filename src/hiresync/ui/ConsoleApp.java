@@ -4,6 +4,8 @@ import hiresync.models.Company;
 import hiresync.models.JobProfile;
 import hiresync.models.Student;
 import hiresync.services.PlacementCoordinator;
+import hiresync.exceptions.DuplicateOfferException;
+import hiresync.exceptions.InvalidTransitionException;
 import hiresync.exceptions.IneligibleStudentException;
 import hiresync.state.ApplicationState;
 import java.util.ArrayList;
@@ -199,7 +201,7 @@ public class ConsoleApp {
                     try {
                         coordinator.applyStudentToJob(student, profile);
                         System.out.println("Successfully applied for " + profile.getTitle());
-                    } catch (IneligibleStudentException e) {
+                    } catch (IneligibleStudentException | InvalidTransitionException e) {
                         System.err.println("Error: " + e.getMessage());
                     }
                 }
@@ -249,10 +251,16 @@ public class ConsoleApp {
                 System.out.println("2. Make Offer");
                 int action = getIntInput("Select Action: ");
 
-                if (action == 1) {
-                    coordinator.scheduleInterview(student, profile);
-                } else if (action == 2) {
-                    coordinator.makeOffer(student, profile);
+                try {
+                    if (action == 1) {
+                        coordinator.scheduleInterview(student, profile);
+                        System.out.println("Interview scheduled successfully.");
+                    } else if (action == 2) {
+                        coordinator.makeOffer(student, profile);
+                        System.out.println("Offer made successfully.");
+                    }
+                } catch (InvalidTransitionException | DuplicateOfferException e) {
+                    System.err.println("Error: " + e.getMessage());
                 }
             }
         }
